@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>API - Facebook ADINTEREST/ADINTERESTSUGGESTION </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div id="app" style="text-align:center">
+        <h1 class="page-header">API - Facebook ADINTEREST/ADINTERESTSUGGESTION</h1>
+        <input id="campoNome" type="text" class="form-control" size="40" placeholder="Digite o nome do interesse" />
+        <br>
+        <input id="campoLimite" type="text" class="form-control" size="40" value=100 placeholder="Digite o numero limite de interesses" />
+        <br>
+        <br>
+        <select id="tipo" class="form-control">
+            <option value="ADINTEREST" selected="selected">ADINTEREST</option>
+            <option value="ADINTERESTSUGGESTION" >ADINTERESTSUGGESTION</option>
+        </select>
+        <br>
+        <br>
+        <br>
+        <button onclick="recuperarDados()" class="btn btn-success">Recuperar Dados do Facebook</button>
+        <br />
+        <br />
+        <br>
+
+    </div>
+    <div id="appTable" class="table-responsive">
+    </div>
+
+
+    <script type="text/javascript">
+        var elApp = document.getElementById("app");
+        var elAppTable = document.getElementById("appTable");
+        var interesses = JSON.parse(localStorage.getItem("interesses")) || [];
+        var listaInteresses = JSON.parse(localStorage.getItem("listaInteresses")) || [];
+
+        var elNome = document.getElementById("campoNome");
+        var elLimite = document.getElementById("campoLimite");
+        var elTipo = document.getElementById("tipo");
+
+        function salvarInteresses(interesses) {
+            listaInteresses = [];
+            var i = 1;
+            for (interesse of interesses) {
+                listaInteresses.push({
+                    n: i,
+                    audiencia: interesse.audience_size,
+                    nome: interesse.name,
+                    topico: interesse.topic
+                });
+                i++;
+            }
+
+            listarInteresses(listaInteresses);
+        }
+
+        function listarInteresses(interesses) {
+            var arrayCell = ["Nº", "Audiência", "Nome", "Tópico"];
+
+            interesses.sort(function(a, b) {
+                return b.audience_size - a.audience_size
+            });
+            console.log(interesses);
+            var i = 1;
+
+            // creates a <table> element and a <tbody> element
+            tbl = document.createElement("table");
+            var tblBody = document.createElement("tbody");
+            var tblHead = document.createElement("thead");
+
+            //adiciona a linha
+            var row = document.createElement("tr");
+            //monta o cabeçalho da table(head)
+            for (var title in arrayCell) {
+                var cell = document.createElement("th");
+                var cellText = document.createTextNode(arrayCell[title]);
+                cell.appendChild(cellText);
+                row.appendChild(cell);
+            }
+
+            tblHead.appendChild(row);
+
+            //busca os insteresses e os insere na table
+            for (interesse of interesses) {
+                var row = document.createElement("tr");
+
+                for (var prop in interesse) {
+                    var cell = (prop == "n" ? document.createElement("th") : document.createElement("td"));
+                    var cellText = document.createTextNode((interesse[prop] == undefined ? " - " : interesse[prop]));
+                    cell.appendChild(cellText);
+                    row.appendChild(cell);
+
+                }
+
+                tblBody.appendChild(row);
+
+            }
+            tblHead.setAttribute("class", "thead-dark");
+            // put the <tbody> in the <table>
+            tbl.appendChild(tblHead);
+            tbl.appendChild(tblBody);
+            // appends <table> into <body>
+            elAppTable.appendChild(tbl);
+            tbl.setAttribute("class", "table table-striped table-bordered table-hover");
+        }
+
+
+        function recuperarDados() {
+            elAppTable.innerHTML = "";
+
+            nome = elNome.value;
+            limite = elLimite.value;
+            tipo = elTipo.value;
+            var url = "https://graph.facebook.com/search?type=adinterest&q=[" + nome + "]&limit=" + limite + "&locale=pt_BR&access_token=2220093371405371|fBGmCH3JOmKSjBMQvVnx0irvRdY";
+            var url2 = "https://graph.facebook.com/search?type=adinterestsuggestion&interest_list=[%22" + nome + "%22]&limit=" + limite + "&locale=en_US&access_token=2220093371405371|fBGmCH3JOmKSjBMQvVnx0irvRdY"
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", (tipo == "ADINTEREST" ? url : url2));
+            xhr.send(null);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    var res = JSON.parse(xhr.responseText);
+                    var res2 = res['data'];
+                    salvarInteresses(res2);
+                    // listarInteresses(res2);
+                }
+            };
+        }
+    </script>
+</body>
+
+</html>
